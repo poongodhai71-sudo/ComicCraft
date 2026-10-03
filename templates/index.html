@@ -1,0 +1,263 @@
+{% macro story_fields(values, generation_id="") -%}
+<input type="hidden" name="title" value="{{ values.title }}">
+<input type="hidden" name="character" value="{{ values.character }}">
+<input type="hidden" name="genre" value="{{ values.genre }}">
+<input type="hidden" name="description" value="{{ values.description }}">
+<input type="hidden" name="character_details" value="{{ values.character_details }}">
+<input type="hidden" name="setting" value="{{ values.setting }}">
+<input type="hidden" name="tone" value="{{ values.tone }}">
+<input type="hidden" name="art_style" value="{{ values.art_style }}">
+<input type="hidden" name="panel_count" value="{{ values.panel_count }}">
+{% if generation_id %}<input type="hidden" name="generation_id" value="{{ generation_id }}">{% endif %}
+{%- endmacro %}
+
+{% macro comic_board(comic, generation_id, allow_regeneration=false) -%}
+<div class="comic-grid" data-generation-id="{{ generation_id }}">
+  {% for panel in comic %}
+  <article class="comic-panel">
+    <div class="panel-art">
+      {% if panel.image_url %}
+      <img class="panel-image" src="{{ panel.image_url }}" alt="{{ panel.scene_description }}" loading="lazy">
+      {% else %}
+      <div class="demo-panel-art" role="img" aria-label="Demo storyboard panel; AI image generation is not included">
+        <span class="demo-art-mark" aria-hidden="true">{{ ["✦", "↗", "◈", "✧", "✳", "◎"][(loop.index0) % 6] }}</span>
+        <span class="demo-art-label">DEMO STORYBOARD</span>
+        <span class="demo-art-note">No AI image generated</span>
+      </div>
+      {% endif %}
+      <span class="panel-number">Panel {{ loop.index }}</span>
+    </div>
+    <div class="panel-copy">
+      <p class="panel-beat">{{ panel.beat }}</p>
+      <p class="panel-scene">{{ panel.scene_description }}</p>
+      <p class="panel-caption">{{ panel.caption }}</p>
+      <p class="panel-dialogue">“{{ panel.dialogue }}”</p>
+      {% if allow_regeneration %}
+      <button class="button button-secondary panel-regenerate" type="button" data-panel-index="{{ loop.index0 }}" data-url="/api/generations/{{ generation_id }}/panels/{{ loop.index0 }}/regenerate"><span aria-hidden="true">↻</span> Regenerate Image</button>
+      <p class="panel-regeneration-status" role="status" aria-live="polite"></p>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{%- endmacro %}
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08060D">
+  <meta name="description" content="Turn your imagination into comics with ComicCraft.">
+  <title>ComicCraft | AI Comic Story Creator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}?v=comiccraft-demo-layout-2">
+  <script src="{{ url_for('static', path='/app.js') }}?v=comiccraft-demo-fallback-1" defer></script>
+</head>
+<body class="stage-{{ stage }}">
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="ComicCraft home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>Comic<span class="brand-light">Craft</span></span>
+      </a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a {% if stage == "welcome" %}aria-current="page"{% endif %} href="/">Home</a>
+        <a {% if stage == "story" %}aria-current="page"{% endif %} href="/story">Create Comic</a>
+        <a href="/#team">About Team</a>
+      </nav>
+    </header>
+
+    <nav class="workflow-progress" aria-label="Story creation progress">
+      <p class="progress-count">STEP {{ step }} <span>OF 4</span></p>
+      <ol>
+        {% for label in ["Welcome", "Your story", "Comic preview", "Final story"] %}
+        <li class="{% if loop.index == step %}is-current{% elif loop.index < step %}is-complete{% endif %}" {% if loop.index == step %}aria-current="step"{% endif %}>
+          <span class="progress-node">{% if loop.index < step %}✓{% else %}0{{ loop.index }}{% endif %}</span>
+          <span class="progress-label">{{ label }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+      <span class="progress-track"><span style="width: {{ (step - 1) * 33.333 }}%"></span></span>
+    </nav>
+
+    <main>
+      <div class="ai-generation-status" id="ai-generation-status" role="status" aria-live="polite" hidden>
+        <p id="ai-generation-message">Preparing your story…</p>
+        <progress id="ai-generation-progress" max="100" value="0"></progress>
+      </div>
+      {% if stage == "welcome" %}
+      <section class="welcome-page" aria-labelledby="page-title">
+        <div class="welcome-content">
+          <p class="eyebrow"><span class="eyebrow-line"></span> YOUR IDEAS, IN A WHOLE NEW FRAME</p>
+          <h1 id="page-title">Turn Your Imagination <span>Into Comics</span></h1>
+          <p class="welcome-description">Transform your ideas into amazing comic stories with AI.</p>
+          <a class="button button-primary welcome-start" href="/story">Start Creating <span aria-hidden="true">→</span></a>
+          <p class="welcome-footnote">ONE IDEA <span>·</span> YOUR CHARACTERS <span>·</span> A STORY TO KEEP</p>
+        </div>
+        <div class="welcome-art" aria-hidden="true">
+          <span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span>
+          <div class="art-frame frame-back"><i></i><i></i><i></i><i></i></div>
+          <div class="art-frame frame-front"><i></i><i></i><i></i><i></i></div>
+          <span class="art-star star-one">✦</span><span class="art-star star-two">✧</span>
+        </div>
+      </section>
+
+      <section class="team-section" id="team" aria-labelledby="team-title">
+        <p class="eyebrow"><span class="eyebrow-line"></span> THE PEOPLE BEHIND THE PANELS</p>
+        <div class="team-card">
+          <div class="team-icon" aria-hidden="true">👥</div>
+          <h2 id="team-title">Team ComicCraft</h2>
+          <div class="team-leader">
+            <span class="leader-label">TEAM LEADER</span>
+            <p><span aria-hidden="true">👑</span> Poongodhai B</p>
+          </div>
+          <ul class="team-members">
+            <li><span>Team Member</span> Pavatharani K</li>
+            <li><span>Team Member</span> Manikandan S</li>
+            <li><span>Team Member</span> Vasanthakumar K</li>
+            <li><span>Team Member</span> Subashree K</li>
+          </ul>
+        </div>
+      </section>
+
+      {% elif stage == "story" %}
+      <section class="step-page story-page" aria-labelledby="page-title">
+        <div class="step-intro">
+          <p class="eyebrow"><span class="eyebrow-line"></span> STEP 02 <span class="eyebrow-muted">/ YOUR STORY</span></p>
+          <h1 id="page-title">Create Your Comic Story</h1>
+          <p>Describe your imagination and let AI help you create a comic.</p>
+        </div>
+        <div class="form-panel">
+          {% if not api_configured %}
+          <div class="alert demo-availability" role="note"><span class="alert-mark" aria-hidden="true">!</span><p><strong>Gemini is not configured.</strong> Generate a clearly labeled demo comic now, or add GEMINI_API_KEY to the project-root .env file and restart ComicCraft to use AI story and image generation.</p></div>
+          {% endif %}
+          {% if error %}
+          <div class="alert" role="alert"><span class="alert-mark" aria-hidden="true">!</span><p>{{ error }}</p></div>
+          {% endif %}
+          <form action="/generate" method="post" id="story-form" data-ai-generation>
+            <div class="field-row">
+              <label class="field">
+                <span>Story Title <b aria-hidden="true">*</b></span>
+                <input type="text" name="title" value="{{ values.title }}" maxlength="80" placeholder="The Lantern at Low Tide" required>
+              </label>
+              <label class="field">
+                <span>Main Character Name <b aria-hidden="true">*</b></span>
+                <input type="text" name="character" value="{{ values.character }}" maxlength="48" placeholder="Mira" required>
+              </label>
+            </div>
+            <label class="field">
+              <span>Story Description / Prompt <b aria-hidden="true">*</b></span>
+              <textarea name="description" id="description" maxlength="600" rows="5" placeholder="What does your character want? What surprising event changes everything?" required>{{ values.description }}</textarea>
+              <span class="field-foot"><span>Share the main idea, a challenge, or how the story might end.</span><span id="character-count">{{ values.description|length }} / 600</span></span>
+            </label>
+            <label class="field">
+              <span>Character Description</span>
+              <input type="text" name="character_details" value="{{ values.character_details }}" maxlength="400" placeholder="Appearance, outfit, personality, or special details">
+            </label>
+            <label class="field">
+              <span>Setting / Location</span>
+              <input type="text" name="setting" value="{{ values.setting }}" maxlength="160" placeholder="A floating city above a violet sea">
+            </label>
+            <div class="field-row">
+              <label class="field">
+                <span>Genre</span>
+                <select name="genre" required>
+                  {% for genre in genres %}<option value="{{ genre }}" {% if values.genre == genre %}selected{% endif %}>{{ genre }}</option>{% endfor %}
+                </select>
+              </label>
+              <label class="field">
+                <span>Story Tone</span>
+                <select name="tone" required>
+                  {% for tone in tones %}<option value="{{ tone }}" {% if values.tone == tone %}selected{% endif %}>{{ tone }}</option>{% endfor %}
+                </select>
+              </label>
+            </div>
+            <div class="field-row">
+              <label class="field">
+                <span>Comic Art Style</span>
+                <select name="art_style" required>
+                  {% for style in art_styles %}<option value="{{ style }}" {% if values.art_style == style %}selected{% endif %}>{{ style }}</option>{% endfor %}
+                </select>
+              </label>
+              <label class="field">
+                <span>Number of Comic Panels</span>
+                <select name="panel_count" required>
+                  {% for count in panel_counts %}<option value="{{ count }}" {% if values.panel_count == count %}selected{% endif %}>{{ count }} panels</option>{% endfor %}
+                </select>
+              </label>
+            </div>
+            <div class="step-navigation">
+              <a class="button button-secondary" href="/"><span aria-hidden="true">←</span> Home</a>
+              <button class="button button-primary" type="submit" name="generation_mode" value="gemini">{{ "Generate My Comic" if api_configured else "Generate Demo Comic" }} <span aria-hidden="true">→</span></button>
+              {% if api_configured %}<button class="button button-secondary demo-submit" type="submit" name="generation_mode" value="demo">Try Demo Mode</button>{% endif %}
+            </div>
+          </form>
+          <button class="sample-button" type="button" id="sample-button">Fill a sample story</button>
+        </div>
+      </section>
+
+      {% elif stage == "preview" %}
+      <section class="step-page preview-page" aria-labelledby="page-title">
+        <div class="step-intro preview-intro">
+          <p class="eyebrow"><span class="eyebrow-line"></span> STEP 03 <span class="eyebrow-muted">/ COMIC PREVIEW</span></p>
+          <h1 id="page-title">Your Comic Preview</h1>
+          <p><span class="final-title">{{ values.title }}</span> <span class="byline-divider">·</span> {{ values.genre }} <span class="byline-divider">·</span> {{ values.character }}</p>
+        </div>
+        {% if generated_story %}
+        <div class="story-summary">
+          <h2>Story summary</h2>
+          <p>{{ generated_story.story_text }}</p>
+          <p class="character-summary"><strong>{{ values.character }}</strong> — {{ values.character_details or generated_story.character_description }}{% if values.setting %}<br><strong>Setting:</strong> {{ values.setting }}{% endif %}</p>
+        </div>
+        {% endif %}
+        {% if is_demo %}<div class="demo-notice" role="status"><strong>DEMO MODE</strong><span>This text-only demo storyboard is based on your input. It was not generated by Gemini, and no AI artwork is included. Configure a valid Gemini API key and restart ComicCraft to generate an AI story and images.</span></div>{% endif %}
+        {% if error %}<div class="alert" role="alert"><span class="alert-mark" aria-hidden="true">!</span><p>{{ error }}</p></div>{% endif %}
+        {% if comic %}{{ comic_board(comic, generation_id, not is_demo) }}{% else %}<div class="alert" role="alert"><p>No generated panels are available. Return to your story and generate the comic before continuing.</p></div>{% endif %}
+        <div class="step-navigation preview-navigation">
+          <form action="/edit" method="post">{{ story_fields(values) }}<button class="button button-secondary" type="submit"><span aria-hidden="true">←</span> Edit Story</button></form>
+          {% if comic %}
+          <form action="/regenerate" method="post" data-ai-generation>{{ story_fields(values) }}<input type="hidden" name="generation_mode" value="{{ 'demo' if is_demo else 'gemini' }}"><button class="button button-secondary" type="submit"><span aria-hidden="true">↻</span> {{ "New Demo Story" if is_demo else "Regenerate Story" }}</button></form>
+          <form action="/final" method="post">{{ story_fields(values, generation_id) }}<button class="button button-primary" type="submit">Continue to Final Story <span aria-hidden="true">→</span></button></form>
+          {% endif %}
+        </div>
+      </section>
+
+      {% else %}
+      <section class="step-page final-page" aria-labelledby="page-title">
+        <div class="step-intro preview-intro">
+          <p class="eyebrow"><span class="eyebrow-line"></span> STEP 04 <span class="eyebrow-muted">/ YOUR FINISHED COMIC</span></p>
+          <h1 id="page-title">Your Final Comic Story</h1>
+          <p class="final-title">{{ values.title }}</p>
+        </div>
+        {% if generated_story %}
+        <section class="final-story-copy" aria-label="Complete story and character details">
+          <p class="eyebrow">THE COMPLETE STORY</p>
+          <h2>{{ generated_story.title }}</h2>
+          <p class="complete-story">{{ generated_story.story_text }}</p>
+          <div class="character-details">
+            <h3>Character details</h3>
+            <p><strong>{{ values.character }}</strong> — {{ values.character_details or generated_story.character_description }}</p>
+            <p><strong>Visual guide:</strong> {{ generated_story.character_description }}</p>
+            <p><strong>Setting:</strong> {{ values.setting or "Created from the story prompt" }} <span>·</span> {{ values.genre }} <span>·</span> {{ values.tone }} <span>·</span> {{ values.art_style }}</p>
+          </div>
+        </section>
+        {% endif %}
+        {% if is_demo %}<div class="demo-notice" role="status"><strong>DEMO MODE</strong><span>This text-only demo storyboard is based on your input. It was not generated by Gemini, and no AI artwork is included. Configure a valid Gemini API key and restart ComicCraft to generate an AI story and images.</span></div>{% endif %}
+        {% if comic %}{{ comic_board(comic, generation_id) }}{% else %}<div class="alert" role="alert"><p>The complete generated comic is unavailable. Please create a new story.</p></div>{% endif %}
+        <div class="final-actions">
+          {% if comic %}
+          <form action="/download" method="post">{{ story_fields(values, generation_id) }}<button class="button button-primary" type="submit"><span aria-hidden="true">↓</span> Download PDF</button></form>
+          {% endif %}
+          <a class="button button-secondary" href="/story?new=1">Create New Story <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+      {% endif %}
+    </main>
+
+    <footer class="footer"><span>COMICCRAFT STUDIO</span><span>Made for the stories in your head.</span></footer>
+  </div>
+</body>
+</html>
