@@ -1,4 +1,4 @@
-ComicCraft – AI Comic Story Creator
+**ComicCraft – AI Comic Story Creator**
 
 ComicCraft is an AI-powered web application that creates original comic stories and illustrated comic panels from a user's idea.
 
@@ -6,7 +6,7 @@ The application allows users to enter a story prompt, character details, genre, 
 
 The completed comic can be previewed and exported as a PDF.
 
-Features
+**Features**
 AI-generated comic stories
 Custom story prompts
 Character and setting details
@@ -21,7 +21,7 @@ Individual panel image regeneration
 PDF export
 Secure server-side API key handling
 
-##Technologies Used
+Technologies Used
 Python
 FastAPI
 Google Gemini API
@@ -33,7 +33,7 @@ Pydantic
 Uvicorn
 
 
-How It Works:
+**How It Works:**
 
 User Input
     ↓
@@ -53,7 +53,7 @@ Comic Preview
     ↓
 PDF Export
 
-Project Structure
+**Project Structure**
 
 ComicCraft/
 │
@@ -76,7 +76,7 @@ ComicCraft/
 ├── requirements.txt
 └── README.md
 
-AI Models
+**AI Models**
 
 Story Generation
 
@@ -85,13 +85,13 @@ gemini-3.5-flash-lite
 
 Google Gemini is used to generate the structured comic story, including scenes, captions, dialogue, and character information.
 
-Image Generation
+**Image Generation**
 
 ComicCraft uses Stability AI to generate the illustrations for the comic panels.
 
 Each panel is generated using the scene and character information produced during the story-generation process.
 
-Requirements
+**Requirements**
 
 Windows 10 or Windows 11
 Python 3.10 or newer
@@ -99,7 +99,7 @@ Google Gemini API key
 Stability AI API key
 Internet connection
 
-Installation
+**Installation**
 
 1. Clone the repository
 git clone https://github.com/poongodhai71-sudo/ComicCraft.git
@@ -112,21 +112,21 @@ py -m venv .venv
 4. Install dependencies
 python -m pip install -r requirements.txt
 
-Environment Variables
+**Environment Variables**
 Create a .env file in the project folder:
 
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_TEXT_MODEL=gemini-3.5-flash-lite
 STABILITY_API_KEY=your_stability_api_key_here
 
-Run the Application
+**Run the Application**
 From the C:\ComicCraft folder, run:
 
 .\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8768
 Then open:
 http://127.0.0.1:8768/story
 
-Creating a Comic
+**Creating a Comic**
 
 1.Enter a story title.
 2.Enter your story idea.
@@ -139,17 +139,17 @@ Creating a Comic
 9.Preview the completed comic.
 10.Download the comic as a PDF.
 
-PDF Export
+**PDF Export**
 
 ComicCraft can export the generated comic as a PDF containing the story content, panel illustrations, captions, and dialogue.
 
-Security
+**Security**
 
 API keys are stored in environment variables and are not included in the application's frontend code.
 
 The .env file is excluded from Git using .gitignore.
 
-Future Improvements
+**Future Improvements**
 
 Improved character consistency
 More comic layouts
@@ -158,8 +158,8 @@ User accounts
 Cloud storage for generated comics
 Improved mobile support
 Additional comic customization options
-Author
 
-Poongodhai
 
+**Author**
+**Poongodhai**
 ComicCraft – AI Comic Story Creator
