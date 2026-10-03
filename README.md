@@ -1,4 +1,4 @@
-#ComicCraft – AI Comic Story Creator
+ComicCraft – AI Comic Story Creator
 
 ComicCraft is an AI-powered web application that creates original comic stories and illustrated comic panels from a user's idea.
 
@@ -6,7 +6,7 @@ The application allows users to enter a story prompt, character details, genre, 
 
 The completed comic can be previewed and exported as a PDF.
 
-##Features
+Features
 AI-generated comic stories
 Custom story prompts
 Character and setting details
@@ -33,7 +33,7 @@ Pydantic
 Uvicorn
 
 
-##How It Works:
+How It Works:
 
 User Input
     ↓

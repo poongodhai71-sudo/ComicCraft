@@ -41,9 +41,6 @@ from reportlab.platypus import (
 import ai_service
 
 
-# ============================================================
-# APPLICATION CONFIGURATION
-# ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
 ENV_FILE = BASE_DIR / ".env"
@@ -80,9 +77,7 @@ print("[ComicCraft] API key loaded:", bool(GEMINI_API_KEY))
 print("[ComicCraft] API key length:", len(GEMINI_API_KEY))
 print("[ComicCraft] Text model:", GEMINI_TEXT_MODEL)
 print("[ComicCraft] Image model:", GEMINI_IMAGE_MODEL)
-# ============================================================
-# GENERATION SETTINGS
-# ============================================================
+
 
 GENERATION_TTL_SECONDS = 12 * 60 * 60
 MAX_SAVED_GENERATIONS = 8
@@ -104,9 +99,7 @@ _last_image_generation_by_client: dict[str, float] = {}
 _generation_cache: dict[str, StoredGeneration] = {}
 
 
-# ============================================================
-# DATA MODELS
-# ============================================================
+
 
 class StoredGeneration(BaseModel):
     generation_id: str
@@ -117,9 +110,7 @@ class StoredGeneration(BaseModel):
     is_demo: bool = False
 
 
-# ============================================================
-# DEFAULT / UI DATA
-# ============================================================
+
 
 DEMO_STORY = {
     "title": "The Lantern at Low Tide",
@@ -213,9 +204,6 @@ PANEL_BEATS = (
 )
 
 
-# ============================================================
-# FILE / GENERATION HELPERS
-# ============================================================
 
 def _generation_directory(generation_id: str) -> Path | None:
     try:
@@ -485,9 +473,6 @@ def _save_generation(
     return record
 
 
-# ============================================================
-# PANEL / COMIC HELPERS
-# ============================================================
 
 def _panel_payload(
     generation: StoredGeneration,
@@ -636,10 +621,6 @@ def generate_comic(
     ]
 
 
-# ============================================================
-# DEMO GENERATION
-# ============================================================
-
 def _generate_demo_generation(
     values: dict[str, str],
 ) -> StoredGeneration:
@@ -728,10 +709,6 @@ def _generate_demo_generation(
     )
 
 
-# ============================================================
-# PAGE RENDERING
-# ============================================================
-
 def _render_page(
     request: Request,
     values: dict[str, str],
@@ -775,9 +752,6 @@ def _render_page(
     )
 
 
-# ============================================================
-# VALIDATION
-# ============================================================
 
 def _validate_story(
     title: str,
@@ -854,9 +828,6 @@ def _validate_story(
     return values, None
 
 
-# ============================================================
-# NON-STREAMING COMPLETE GENERATION
-# ============================================================
 
 def _generate_complete(
     values: dict[str, str],
@@ -909,9 +880,7 @@ def _generate_complete(
     )
 
 
-# ============================================================
-# GENERATED PAGE
-# ============================================================
+
 
 def _render_generation(
     request: Request,
@@ -931,9 +900,6 @@ def _render_generation(
     )
 
 
-# ============================================================
-# SERVER-SENT EVENTS
-# ============================================================
 
 def _sse_event(
     payload: dict[str, Any],
@@ -956,9 +922,6 @@ def _console_progress(
     )
 
 
-# ============================================================
-# GENERATION LIMIT / COOLDOWN
-# ============================================================
 
 def _reserve_generation_slot(
     client_id: str,
@@ -1047,9 +1010,6 @@ def _release_generation_slot() -> None:
     )
 
 
-# ============================================================
-# HOME
-# ============================================================
 
 @app.get(
     "/",
@@ -1066,9 +1026,6 @@ async def home(
     )
 
 
-# ============================================================
-# WELCOME
-# ============================================================
 
 @app.post(
     "/welcome",
@@ -1105,10 +1062,6 @@ async def welcome_previous(
         stage="welcome",
     )
 
-
-# ============================================================
-# STORY PAGE
-# ============================================================
 
 @app.get(
     "/story",
@@ -1198,9 +1151,6 @@ async def edit_story(
     )
 
 
-# ============================================================
-# PREVIEW
-# ============================================================
 
 @app.get(
     "/preview",
@@ -1228,9 +1178,6 @@ async def preview_generated(
     )
 
 
-# ============================================================
-# STREAMING AI GENERATION
-# ============================================================
 
 @app.post("/api/generate")
 async def stream_generation(
@@ -1247,9 +1194,7 @@ async def stream_generation(
     generation_mode: str = Form("gemini"),
 ) -> Response:
 
-    # --------------------------------------------------------
-    # Validate user input
-    # --------------------------------------------------------
+
 
     values, error = _validate_story(
         title,
@@ -1282,9 +1227,6 @@ async def stream_generation(
             status_code=422,
         )
 
-    # --------------------------------------------------------
-    # Demo mode
-    # --------------------------------------------------------
 
     use_demo = (
         generation_mode == "demo"
@@ -1356,9 +1298,7 @@ async def stream_generation(
             },
         )
 
-    # --------------------------------------------------------
-    # Gemini generation lock
-    # --------------------------------------------------------
+
 
     client_id = (
         request.client.host
@@ -1383,17 +1323,13 @@ async def stream_generation(
         uuid.uuid4()
     )
 
-    # --------------------------------------------------------
-    # SSE generation events
-    # --------------------------------------------------------
+
 
     async def events():
 
         try:
 
-            # =================================================
-            # STEP 1 — STORY
-            # =================================================
+        
 
             message = (
                 "Writing your original story with Gemini..."
@@ -1433,9 +1369,7 @@ async def stream_generation(
                 }
             )
 
-            # =================================================
-            # STEP 2 — PANEL IMAGES
-            # =================================================
+            
 
             images: list[
                 tuple[bytes, str]
@@ -1481,13 +1415,6 @@ async def stream_generation(
                         "progress": progress_start,
                     }
                 )
-
-                # ------------------------------------------------
-                # Panel 1 has no reference.
-                #
-                # Panels 2+ use Panel 1 as the character/style
-                # reference so the protagonist stays consistent.
-                # ------------------------------------------------
 
                 reference_bytes, reference_mime = (
                     images[0]
@@ -1538,9 +1465,7 @@ async def stream_generation(
                     }
                 )
 
-            # =================================================
-            # STEP 3 — SAVE
-            # =================================================
+            
 
             _console_progress(
                 "Saving complete comic..."
@@ -1573,9 +1498,7 @@ async def stream_generation(
                 }
             )
 
-        # =====================================================
-        # GEMINI ERROR
-        # =====================================================
+        
 
         except ai_service.GeminiServiceError as error:
 
@@ -1590,9 +1513,7 @@ async def stream_generation(
                 }
             )
 
-        # =====================================================
-        # OTHER ERROR
-        # =====================================================
+        
 
         except Exception as error:
 
@@ -1614,9 +1535,7 @@ async def stream_generation(
                 }
             )
 
-        # =====================================================
-        # ALWAYS RELEASE GENERATION SLOT
-        # =====================================================
+        
 
         finally:
 
@@ -1636,9 +1555,7 @@ async def stream_generation(
     )
 
 
-# ============================================================
-# GENERATED PANEL IMAGE
-# ============================================================
+
 
 @app.get(
     "/generated/{generation_id}/panel/{panel_index}"
@@ -1719,9 +1636,7 @@ async def generated_panel(
     )
 
 
-# ============================================================
-# PANEL REGENERATION
-# ============================================================
+
 
 @app.post(
     "/api/generations/{generation_id}"
@@ -1942,9 +1857,7 @@ async def regenerate_panel(
         _release_generation_slot()
 
 
-# ============================================================
-# NON-STREAMING STORY CREATION
-# ============================================================
+
 
 @app.post(
     "/preview",
@@ -2117,9 +2030,7 @@ async def create_story(
     )
 
 
-# ============================================================
-# FINAL STORY
-# ============================================================
+
 
 @app.post(
     "/final",
@@ -2214,9 +2125,7 @@ async def final_generated(
     )
 
 
-# ============================================================
-# PDF DOWNLOAD
-# ============================================================
+
 
 @app.post("/download")
 async def download_comic(
@@ -2276,10 +2185,7 @@ async def download_comic(
             stage="story",
         )
 
-    # ========================================================
-    # PDF DOCUMENT
-    # ========================================================
-
+    
     pdf = BytesIO()
 
     page_width, page_height = letter
@@ -2376,9 +2282,7 @@ async def download_comic(
         ),
     )
 
-    # ========================================================
-    # PDF HEADER / STORY
-    # ========================================================
+    
 
     story = [
         Paragraph(
@@ -2538,9 +2442,7 @@ async def download_comic(
 
         panel_cells.append(cell)
 
-    # ========================================================
-    # PANEL GRID
-    # ========================================================
+    
 
     panel_rows = [
         panel_cells[index:index + 2]
@@ -2640,9 +2542,7 @@ async def download_comic(
         comic_grid
     )
 
-    # ========================================================
-    # BUILD PDF
-    # ========================================================
+    
 
     document.build(story)
 

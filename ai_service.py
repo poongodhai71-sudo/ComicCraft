@@ -13,11 +13,7 @@ from google.genai import types
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 
-# ============================================================
-# ComicCraft - AI Service
-# Gemini = Story generation
-# Stability AI = Image generation
-# ============================================================
+
 
 TEXT_MODEL_DEFAULT = "gemini-3.5-flash-lite"
 
@@ -35,9 +31,6 @@ MAX_RETRIES = 3
 RETRY_DELAYS = (3, 7)
 
 
-# ============================================================
-# Pydantic models
-# ============================================================
 
 class ComicScene(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -87,9 +80,7 @@ class ComicStory(BaseModel):
     )
 
 
-# ============================================================
-# Custom error
-# ============================================================
+
 
 class GeminiServiceError(Exception):
     def __init__(
@@ -105,9 +96,7 @@ class GeminiServiceError(Exception):
         return self.message
 
 
-# ============================================================
-# Gemini client
-# ============================================================
+
 
 _client: genai.Client | None = None
 
@@ -129,9 +118,7 @@ def _get_client(api_key: str) -> genai.Client:
     return _client
 
 
-# ============================================================
-# Error helpers
-# ============================================================
+
 
 def _get_error_status(error: Exception) -> int | None:
     """
@@ -247,9 +234,7 @@ def _friendly_api_error(error: Exception) -> str:
     )
 
 
-# ============================================================
-# Story response parsing
-# ============================================================
+
 
 def _extract_json_text(text: str) -> str:
     """
@@ -281,9 +266,7 @@ def _read_story_response(
     Convert Gemini's structured JSON response into ComicStory.
     """
 
-    # --------------------------------------------------------
-    # First try the parsed response supplied by the SDK.
-    # --------------------------------------------------------
+    
 
     parsed = getattr(response, "parsed", None)
 
@@ -301,9 +284,7 @@ def _read_story_response(
             ) from error
 
     else:
-        # ----------------------------------------------------
-        # Fall back to response.text.
-        # ----------------------------------------------------
+        
 
         text = getattr(response, "text", None)
 
@@ -331,9 +312,7 @@ def _read_story_response(
                 f"{error}"
             ) from error
 
-    # --------------------------------------------------------
-    # Validate panel count.
-    # --------------------------------------------------------
+    
 
     if len(story.scenes) != panel_count:
         raise GeminiServiceError(
@@ -341,9 +320,7 @@ def _read_story_response(
             f"but ComicCraft requested {panel_count} panels."
         )
 
-    # --------------------------------------------------------
-    # Validate required text.
-    # --------------------------------------------------------
+    
 
     if not story.title.strip():
         raise GeminiServiceError(
@@ -363,9 +340,7 @@ def _read_story_response(
     return story
 
 
-# ============================================================
-# Story generation - Gemini
-# ============================================================
+
 
 def generate_story(
     api_key: str,
@@ -405,9 +380,7 @@ def generate_story(
 
     panel_count = max(2, min(panel_count, 6))
 
-    # --------------------------------------------------------
-    # Prompt
-    # --------------------------------------------------------
+    
 
     prompt = f"""
 You are the story-writing engine for ComicCraft, an AI comic story creator.
@@ -463,9 +436,7 @@ Every scene must contain:
 - image_prompt
 """
 
-    # --------------------------------------------------------
-    # Retry loop
-    # --------------------------------------------------------
+    
 
     for attempt in range(1, MAX_RETRIES + 1):
 
@@ -553,9 +524,7 @@ Every scene must contain:
     )
 
 
-# ============================================================
-# Stability AI helpers
-# ============================================================
+
 
 def _get_stability_api_key() -> str:
     """
@@ -663,9 +632,6 @@ def _is_retryable_stability_status(
     }
 
 
-# ============================================================
-# Panel image generation - Stability AI
-# ============================================================
 
 def generate_panel_image(
     api_key: str,
@@ -697,9 +663,7 @@ def generate_panel_image(
 
     scene = story.scenes[panel_index]
 
-    # --------------------------------------------------------
-    # Story information
-    # --------------------------------------------------------
+    
 
     character_description = (
         story.character_description.strip()
@@ -717,9 +681,7 @@ def generate_panel_image(
         scene.dialogue.strip()
     )
 
-    # --------------------------------------------------------
-    # Stability prompt
-    # --------------------------------------------------------
+    
 
     prompt = f"""
 Create a single finished comic-book panel illustration.
@@ -769,16 +731,7 @@ VISUAL REQUIREMENTS
         "blurry image, low quality"
     )
 
-    # --------------------------------------------------------
-    # We keep reference_image in the signature because main.py
-    # already supplies it.
-    #
-    # Stable Image Core supports an image input, but that changes
-    # the request into image-to-image generation and requires
-    # additional parameters. For today's reliable submission,
-    # use text-to-image for each panel and emphasize consistency
-    # through the detailed character description in the prompt.
-    # --------------------------------------------------------
+    
 
     if reference_image:
         print(
@@ -787,10 +740,7 @@ VISUAL REQUIREMENTS
             "Stable Image Core generation."
         )
 
-    # --------------------------------------------------------
-    # Stability request
-    # --------------------------------------------------------
-
+    
     headers = {
         "authorization": (
             f"Bearer {stability_api_key}"
@@ -806,9 +756,7 @@ VISUAL REQUIREMENTS
         "output_format": "png",
     }
 
-    # --------------------------------------------------------
-    # Retry loop
-    # --------------------------------------------------------
+    
 
     for attempt in range(1, MAX_RETRIES + 1):
 
@@ -858,9 +806,7 @@ VISUAL REQUIREMENTS
                 "Please check your internet connection."
             ) from error
 
-        # ----------------------------------------------------
-        # Successful generation
-        # ----------------------------------------------------
+        
 
         if response.status_code == 200:
 
@@ -890,9 +836,7 @@ VISUAL REQUIREMENTS
 
             return image_bytes, "image/png"
 
-        # ----------------------------------------------------
-        # Stability API error
-        # ----------------------------------------------------
+        
 
         print(
             "[ComicCraft] FULL IMAGE ERROR TYPE:",
