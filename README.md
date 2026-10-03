@@ -37,8 +37,10 @@ Uvicorn
 
 User Input
     ↓
+    
 FastAPI Backend
     ↓
+    
 Google Gemini
     ↓
 Structured Comic Story
