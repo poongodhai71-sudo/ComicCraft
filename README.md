@@ -168,4 +168,5 @@ Additional comic customization options
 **Author**
 
 **Poongodhai**
+
 ComicCraft – AI Comic Story Creator
