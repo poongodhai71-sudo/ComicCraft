@@ -36,40 +36,59 @@ Uvicorn
 **How It Works:**
 
 User Input
+
     ↓
     
 FastAPI Backend
+
     ↓
     
 Google Gemini
+
     ↓
+    
 Structured Comic Story
+
     ↓
+    
 Panel / Scene Prompts
+
     ↓
+    
 Stability AI
+
     ↓
+    
 Generated Comic Images
+
     ↓
+    
 Comic Preview
+
     ↓
+    
 PDF Export
 
 **Project Structure**
 
 ComicCraft/
+
 │
 ├── static/
+
 │   ├── app.js
 │   └── style.css
 │
 ├── templates/
+
 │   └── index.html
 │
 ├── tests/
+
 │   ├── test_ai_workflow.py
 │   └── test_main.py
 │
+
 ├── .env.example
 ├── .gitignore
 ├── ai_service.py
