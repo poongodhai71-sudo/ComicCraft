@@ -36,37 +36,21 @@ Uvicorn
 **How It Works:**
 
 User Input
-
     ↓
-    
 FastAPI Backend
-
     ↓
-    
 Google Gemini
-
     ↓
-    
 Structured Comic Story
-
     ↓
-    
 Panel / Scene Prompts
-
     ↓
-    
 Stability AI
-
     ↓
-    
 Generated Comic Images
-
     ↓
-    
 Comic Preview
-
     ↓
-    
 PDF Export
 
 **Project Structure**
